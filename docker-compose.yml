@@ -1,0 +1,264 @@
+services:
+  kafka1:
+    container_name: kafka1
+    build: ./kafka
+    ports:
+      - "9092:9092"
+      - "19092:19092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:19092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka1:19092,2@kafka2:19093,3@kafka3:19094
+      KAFKA_LOG_DIRS: /var/lib/kafka/data/
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    volumes:
+      - kafka1_logs:/var/lib/kafka/data/
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    networks:
+      - int-network
+
+  kafka2:
+    container_name: kafka2
+    build: ./kafka
+    ports:
+      - "9093:9093"
+      - "19093:19093"
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9093,CONTROLLER://0.0.0.0:19093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka1:19092,2@kafka2:19093,3@kafka3:19094
+      KAFKA_LOG_DIRS: /var/lib/kafka/data/
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    volumes:
+      - kafka2_logs:/var/lib/kafka/data/
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    networks:
+      - int-network
+
+  kafka3:
+    container_name: kafka3
+    build: ./kafka
+    ports:
+      - "9094:9094"
+      - "19094:19094"
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9094,CONTROLLER://0.0.0.0:19094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka1:19092,2@kafka2:19093,3@kafka3:19094
+      KAFKA_LOG_DIRS: /var/lib/kafka/data/
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    volumes:
+      - kafka3_logs:/var/lib/kafka/data/
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    networks:
+      - int-network
+
+  kafka-setup:
+    container_name: kafka-setup
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+    - kafka1
+    - kafka2
+    - kafka3
+
+    command: >
+      bash -c "
+      echo '=== INICIANDO SETUP DO KAFKA ===' &&
+      echo 'Aguardando todos os brokers Kafka ficarem saudáveis...' &&
+      sleep 30 &&
+      echo 'Verificando conexão com kafka1...' &&
+      kafka-topics --bootstrap-server kafka1:9092 --list &&
+      echo 'Verificando conexão com kafka2...' &&
+      kafka-topics --bootstrap-server kafka2:9093 --list &&
+      echo 'Verificando conexão com kafka3...' &&
+      kafka-topics --bootstrap-server kafka3:9094 --list &&
+      echo 'Todos os brokers estão respondendo!' &&
+      echo 'Criando tópico dados-sensores...' &&
+      kafka-topics --bootstrap-server kafka1:9092 --create --if-not-exists --topic dados-sensores --partitions 3 --replication-factor 2 &&
+      echo 'Tópico criado/verificado com sucesso!' &&
+      echo 'Configurações do tópico:' &&
+      kafka-topics --bootstrap-server kafka1:9092 --describe --topic dados-sensores &&
+      echo '=== SETUP CONCLUÍDO COM SUCESSO ==='
+      "
+    networks:
+      - int-network
+
+  producer-service0:
+    container_name: producer_service0
+    build: ./producer-service
+    depends_on:
+     - kafka-setup
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    environment:
+      KAFKA_BROKERS: kafka1:9092,kafka2:9093,kafka3:9094
+      SENSOR_PREFIX: "sensor_A"
+    networks:
+      - int-network
+      - ext-network
+
+  producer-service1:
+    container_name: producer_service1
+    build: ./producer-service
+    depends_on:
+      - kafka-setup
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    environment:
+      KAFKA_BROKERS: kafka1:9092,kafka2:9093,kafka3:9094
+      SENSOR_PREFIX: "sensor_B"
+    networks:
+      - int-network
+      - ext-network
+
+  producer-service2:
+    container_name: producer_service2
+    build: ./producer-service
+    depends_on:
+      - kafka-setup
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    environment:
+      KAFKA_BROKERS: kafka1:9092,kafka2:9093,kafka3:9094
+      SENSOR_PREFIX: "sensor_C"
+    networks:
+      - int-network
+      - ext-network
+
+  consumer-service0:
+    container_name: consumer_service0
+    build: ./consumer-service
+    ports:
+      - "8081:8080"
+    depends_on:
+      - kafka-setup
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    environment:
+      KAFKA_BROKERS: kafka1:9092,kafka2:9093,kafka3:9094
+      CONSUMER_ID: "consumer_0"
+    networks:
+      - int-network
+      - ext-network
+
+  consumer-service1:
+    container_name: consumer_service1
+    build: ./consumer-service
+    ports:
+      - "8082:8080"
+    depends_on:
+      - kafka-setup
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    environment:
+      KAFKA_BROKERS: kafka1:9092,kafka2:9093,kafka3:9094
+      CONSUMER_ID: "consumer_1"
+    networks:
+      - int-network
+      - ext-network
+
+  consumer-service2:
+    container_name: consumer_service2
+    build: ./consumer-service
+    ports:
+      - "8083:8080"
+    depends_on:
+      - kafka-setup
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    environment:
+      KAFKA_BROKERS: kafka1:9092,kafka2:9093,kafka3:9094
+      CONSUMER_ID: "consumer_2"
+    networks:
+      - int-network
+      - ext-network
+
+  frontend:
+    image: nginx:alpine
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - consumer-service0
+      - consumer-service1
+      - consumer-service2
+    networks:
+       - ext-network
+
+networks:
+  ext-network:
+    driver: bridge
+  int-network:
+    driver: bridge
+    internal: true
+
+volumes:
+  kafka1_logs:
+  kafka2_logs:
+  kafka3_logs:
+
+  

@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Sensores Industriais - Multi Consumer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #2E86AB;
+      --secondary: #A23B72;
+      --success: #18A999;
+      --warning: #F18F01;
+      --danger: #C73E1D;
+      --dark: #2D3047;
+      --light: #F8F9FA;
+      --gray: #6C757D;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+      --consumer1: #2E86AB;
+      --consumer2: #A23B72;
+      --consumer3: #18A999;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #1c1d1e, #727275);
+      color: var(--dark);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding: 25px;
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .logo i {
+      font-size: 2.8rem;
+      color: var(--primary);
+    }
+    
+    .logo h1 {
+      font-size: 2rem;
+      color: var(--dark);
+      font-weight: 700;
+    }
+    
+    .status-container {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      background: var(--light);
+      border-radius: 25px;
+      font-weight: 600;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .status.connected {
+      color: var(--success);
+    }
+    
+    .status.disconnected {
+      color: var(--danger);
+    }
+    
+    .status.connecting {
+      color: var(--warning);
+    }
+    
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    
+    .connected .status-dot {
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+    
+    .disconnected .status-dot {
+      background: var(--danger);
+    }
+    
+    .connecting .status-dot {
+      background: var(--warning);
+      animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    
+    .consumers-overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+    
+    .consumer-card {
+      background: var(--card-bg);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      border-left: 5px solid var(--consumer1);
+    }
+    
+    .consumer-card.consumer-2 {
+      border-left-color: var(--consumer2);
+    }
+    
+    .consumer-card.consumer-3 {
+      border-left-color: var(--consumer3);
+    }
+    
+    .consumer-header {
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .consumer-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    
+    .consumer-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 0.9rem;
+    }
+    
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+      margin-bottom: 30px;
+    }
+    
+    .card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card h2 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      color: var(--dark);
+      font-size: 1.4rem;
+      border-bottom: 2px solid var(--light);
+      padding-bottom: 10px;
+    }
+    
+    .card h2 i {
+      color: var(--primary);
+    }
+    
+    .sensor-value {
+      font-size: 3rem;
+      font-weight: 700;
+      margin: 15px 0;
+      text-align: center;
+    }
+    
+    .sensor-unit {
+      font-size: 1.2rem;
+      color: var(--gray);
+      margin-left: 5px;
+    }
+    
+    .sensor-status {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+    
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.9rem;
+    }
+    
+    .normal { color: var(--success); }
+    .alerta { color: var(--warning); }
+    .critico { color: var(--danger); }
+    
+    .gauge {
+      height: 10px;
+      background: #eee;
+      border-radius: 5px;
+      margin: 15px 0;
+      overflow: hidden;
+    }
+    
+    .gauge-fill {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 0.5s;
+    }
+    
+    .temp-gauge { background: linear-gradient(to right, #2E86AB, #F18F01, #C73E1D); }
+    .vib-gauge { background: linear-gradient(to right, #18A999, #F18F01, #C73E1D); }
+    .energy-gauge { background: linear-gradient(to right, #A23B72, #F18F01, #C73E1D); }
+    
+    .data-panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      margin-top: 30px;
+    }
+    
+    .data-panel {
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    
+    .data-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 0 10px;
+    }
+    
+    .data-header h2 {
+      color: var(--light);
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .controls button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+    
+    .controls button:hover {
+      background: var(--dark);
+      transform: translateY(-2px);
+    }
+    
+    #dados-consumer1, #dados-consumer2, #dados-consumer3 {
+      color: var(--light);
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    
+    .log-entry {
+      margin-bottom: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-left: 3px solid var(--consumer1);
+    }
+    
+    .log-entry.consumer-2 {
+      border-left-color: var(--consumer2);
+    }
+    
+    .log-entry.consumer-3 {
+      border-left-color: var(--consumer3);
+    }
+    
+    .timestamp {
+      color: var(--success);
+      font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 0.8rem;
+    }
+    
+    .sensor-data {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    
+    .data-item {
+      padding: 6px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      font-size: 0.8rem;
+    }
+    
+    .data-label {
+      font-weight: bold;
+    }
+    
+    .consumer-info {
+      font-size: 0.75rem;
+      color: #ccc;
+      margin-top: 5px;
+      display: flex;
+      gap: 10px;
+    }
+    
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px;
+      color: var(--light);
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+    
+    /* Responsividade */
+    @media (max-width: 1200px) {
+      .data-panels {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+      
+      .status-container {
+        justify-content: center;
+      }
+      
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+      
+      .consumers-overview {
+        grid-template-columns: 1fr;
+      }
+      
+      .sensor-data {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <i class="fas fa-industry"></i>
+        <div>
+          <h1>Monitor de Sensores - Multi Consumer</h1>
+          <p style="color: var(--gray); font-size: 1rem;">Balanceamento de Carga com 3 Consumers</p>
+        </div>
+      </div>
+      <div class="status-container">
+        <div class="status connecting" id="status-consumer1">
+          <div class="status-dot"></div>
+          <span>Consumer 1 (8081)</span>
+        </div>
+        <div class="status connecting" id="status-consumer2">
+          <div class="status-dot"></div>
+          <span>Consumer 2 (8082)</span>
+        </div>
+        <div class="status connecting" id="status-consumer3">
+          <div class="status-dot"></div>
+          <span>Consumer 3 (8083)</span>
+        </div>
+      </div>
+    </header>
+    
+    <div class="consumers-overview">
+      <div class="consumer-card consumer-1">
+        <div class="consumer-header">
+          <div class="consumer-title">
+            <i class="fas fa-server" style="color: var(--consumer1);"></i>
+            <span>Consumer 1</span>
+          </div>
+        </div>
+        <div class="consumer-stats">
+          <div class="stat">
+            <span>Porta:</span>
+            <span>8081</span>
+          </div>
+          <div class="stat">
+            <span>Status:</span>
+            <span id="consumer1-status">Conectando...</span>
+          </div>
+          <div class="stat">
+            <span>Mensagens:</span>
+            <span id="consumer1-count">0</span>
+          </div>
+          <div class="stat">
+            <span>Última:</span>
+            <span id="consumer1-last">--:--:--</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="consumer-card consumer-2">
+        <div class="consumer-header">
+          <div class="consumer-title">
+            <i class="fas fa-server" style="color: var(--consumer2);"></i>
+            <span>Consumer 2</span>
+          </div>
+        </div>
+        <div class="consumer-stats">
+          <div class="stat">
+            <span>Porta:</span>
+            <span>8082</span>
+          </div>
+          <div class="stat">
+            <span>Status:</span>
+            <span id="consumer2-status">Conectando...</span>
+          </div>
+          <div class="stat">
+            <span>Mensagens:</span>
+            <span id="consumer2-count">0</span>
+          </div>
+          <div class="stat">
+            <span>Última:</span>
+            <span id="consumer2-last">--:--:--</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="consumer-card consumer-3">
+        <div class="consumer-header">
+          <div class="consumer-title">
+            <i class="fas fa-server" style="color: var(--consumer3);"></i>
+            <span>Consumer 3</span>
+          </div>
+        </div>
+        <div class="consumer-stats">
+          <div class="stat">
+            <span>Porta:</span>
+            <span>8083</span>
+          </div>
+          <div class="stat">
+            <span>Status:</span>
+            <span id="consumer3-status">Conectando...</span>
+          </div>
+          <div class="stat">
+            <span>Mensagens:</span>
+            <span id="consumer3-count">0</span>
+          </div>
+          <div class="stat">
+            <span>Última:</span>
+            <span id="consumer3-last">--:--:--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="data-panels">
+      <div class="data-panel">
+        <div class="data-header">
+          <h2><i class="fas fa-stream" style="color: var(--consumer1);"></i> Consumer 1 (8081)</h2>
+          <div class="controls">
+            <button onclick="clearLogs(1)"><i class="fas fa-trash"></i> Limpar</button>
+          </div>
+        </div>
+        <div id="dados-consumer1"></div>
+      </div>
+      
+      <div class="data-panel">
+        <div class="data-header">
+          <h2><i class="fas fa-stream" style="color: var(--consumer2);"></i> Consumer 2 (8082)</h2>
+          <div class="controls">
+            <button onclick="clearLogs(2)"><i class="fas fa-trash"></i> Limpar</button>
+          </div>
+        </div>
+        <div id="dados-consumer2"></div>
+      </div>
+      
+      <div class="data-panel">
+        <div class="data-header">
+          <h2><i class="fas fa-stream" style="color: var(--consumer3);"></i> Consumer 3 (8083)</h2>
+          <div class="controls">
+            <button onclick="clearLogs(3)"><i class="fas fa-trash"></i> Limpar</button>
+          </div>
+        </div>
+        <div id="dados-consumer3"></div>
+      </div>
+    </div>
+    
+    <footer>
+      <p>Sistema de Monitoramento com Balanceamento de Carga &copy; 2025 - 3 Consumers Kafka</p>
+    </footer>
+  </div>
+
+  <script>
+    // Estado dos consumers
+    const consumers = {
+      1: { ws: null, count: 0, lastUpdate: null, element: 'dados-consumer1', statusElement: 'status-consumer1' },
+      2: { ws: null, count: 0, lastUpdate: null, element: 'dados-consumer2', statusElement: 'status-consumer2' },
+      3: { ws: null, count: 0, lastUpdate: null, element: 'dados-consumer3', statusElement: 'status-consumer3' }
+    };
+
+    // Elementos da UI
+    const statusElements = {
+      1: document.getElementById('status-consumer1'),
+      2: document.getElementById('status-consumer2'),
+      3: document.getElementById('status-consumer3')
+    };
+
+    const countElements = {
+      1: document.getElementById('consumer1-count'),
+      2: document.getElementById('consumer2-count'),
+      3: document.getElementById('consumer3-count')
+    };
+
+    const statusTextElements = {
+      1: document.getElementById('consumer1-status'),
+      2: document.getElementById('consumer2-status'),
+      3: document.getElementById('consumer3-status')
+    };
+
+    const lastUpdateElements = {
+      1: document.getElementById('consumer1-last'),
+      2: document.getElementById('consumer2-last'),
+      3: document.getElementById('consumer3-last')
+    };
+
+    // Elementos dos sensores (mostram o último dado recebido de qualquer consumer)
+    const tempValue = document.getElementById('temp-value');
+    const tempGauge = document.getElementById('temp-gauge');
+    const tempStatus = document.getElementById('temp-status');
+    const tempTrend = document.getElementById('temp-trend');
+    
+    const vibValue = document.getElementById('vib-value');
+    const vibGauge = document.getElementById('vib-gauge');
+    const vibStatus = document.getElementById('vib-status');
+    const vibTrend = document.getElementById('vib-trend');
+    
+    const energyValue = document.getElementById('energy-value');
+    const energyGauge = document.getElementById('energy-gauge');
+    const energyStatus = document.getElementById('energy-status');
+    const energyTrend = document.getElementById('energy-trend');
+
+    let lastData = {
+      temperatura: null,
+      vibracao: null,
+      energia: null
+    };
+
+    function formatTimestamp(timestamp) {
+      if (!timestamp) return '--:--:--';
+      const date = new Date(timestamp * 1000);
+      return date.toLocaleTimeString('pt-BR');
+    }
+
+    function updateConsumerStatus(consumerId, status, message = '') {
+      const statusElement = statusElements[consumerId];
+      const statusTextElement = statusTextElements[consumerId];
+      
+      statusElement.className = `status ${status}`;
+      statusTextElement.textContent = message || status;
+      
+      if (status === 'connected') {
+        statusElement.innerHTML = '<div class="status-dot"></div><span>Consumer ' + consumerId + ' (808' + consumerId + ')</span>';
+      }
+    }
+
+    function updateConsumerStats(consumerId, data) {
+      consumers[consumerId].count++;
+      consumers[consumerId].lastUpdate = data.timestamp;
+      
+      countElements[consumerId].textContent = consumers[consumerId].count;
+      lastUpdateElements[consumerId].textContent = formatTimestamp(data.timestamp);
+    }
+
+    function addLogEntry(consumerId, data) {
+      const logElement = document.getElementById(consumers[consumerId].element);
+      const logEntry = document.createElement('div');
+      
+      logEntry.className = `log-entry consumer-${consumerId}`;
+      logEntry.innerHTML = `
+        <div class="timestamp">${formatTimestamp(data.timestamp)} - Partição: ${data.partition || 'N/A'}</div>
+        <div class="sensor-data">
+          <div class="data-item"><span class="data-label">Sensor:</span> ${data.sensor_id || 'N/A'}</div>
+          <div class="data-item"><span class="data-label">Producer:</span> ${data.producer_id || 'N/A'}</div>
+          <div class="data-item"><span class="data-label">Temp:</span> ${data.temperatura}°C</div>
+          <div class="data-item"><span class="data-label">Vib:</span> ${data.vibracao}Hz</div>
+          <div class="data-item"><span class="data-label">Energy:</span> ${data.energia}kW</div>
+        </div>
+        <div class="consumer-info">
+          <span>Consumer: ${data.consumer_id || consumerId}</span>
+          <span>Msg: ${consumers[consumerId].count}</span>
+        </div>
+      `;
+      
+      logElement.prepend(logEntry);
+      
+      // Limitar a 15 entradas por consumer
+      const entries = logElement.querySelectorAll('.log-entry');
+      if (entries.length > 15) {
+        entries[entries.length - 1].remove();
+      }
+    }
+
+    function updateSensorInterface(data) {
+      // Atualizar temperatura
+      tempValue.textContent = data.temperatura + '°C';
+      tempGauge.style.width = Math.min(data.temperatura / 100 * 100, 100) + '%';
+      
+      // Atualizar vibração
+      vibValue.textContent = data.vibracao + 'Hz';
+      vibGauge.style.width = Math.min(data.vibracao / 10 * 100, 100) + '%';
+      
+      // Atualizar energia
+      energyValue.textContent = data.energia + 'kW';
+      energyGauge.style.width = Math.min(data.energia / 5 * 100, 100) + '%';
+      
+      // Atualizar status baseado nos valores
+      tempStatus.textContent = data.temperatura > 80 ? 'ALERTA' : data.temperatura > 60 ? 'ATENÇÃO' : 'NORMAL';
+      tempStatus.className = `status-indicator ${data.temperatura > 80 ? 'critico' : data.temperatura > 60 ? 'alerta' : 'normal'}`;
+      
+      vibStatus.textContent = data.vibracao > 7 ? 'ALERTA' : data.vibracao > 4 ? 'ATENÇÃO' : 'NORMAL';
+      vibStatus.className = `status-indicator ${data.vibracao > 7 ? 'critico' : data.vibracao > 4 ? 'alerta' : 'normal'}`;
+      
+      energyStatus.textContent = data.energia > 3 ? 'ALERTA' : data.energia > 2 ? 'ATENÇÃO' : 'NORMAL';
+      energyStatus.className = `status-indicator ${data.energia > 3 ? 'critico' : data.energia > 2 ? 'alerta' : 'normal'}`;
+      
+      lastData = data;
+    }
+
+    function connectToConsumer(consumerId, port) {
+      try {
+        const ws = new WebSocket(`ws://localhost:${port}`);
+        
+        ws.onopen = () => {
+          console.log(`Conectado ao Consumer ${consumerId} na porta ${port}`);
+          updateConsumerStatus(consumerId, 'connected', 'Conectado');
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            updateConsumerStats(consumerId, data);
+            addLogEntry(consumerId, data);
+            updateSensorInterface(data); // Atualiza com o último dado recebido
+          } catch (error) {
+            console.error(`Erro ao processar dados do Consumer ${consumerId}:`, error);
+          }
+        };
+        
+        ws.onclose = () => {
+          console.log(`Conexão com Consumer ${consumerId} fechada`);
+          updateConsumerStatus(consumerId, 'disconnected', 'Desconectado');
+          // Tentar reconectar após 5 segundos
+          setTimeout(() => connectToConsumer(consumerId, port), 5000);
+        };
+        
+        ws.onerror = (error) => {
+          console.error(`Erro no Consumer ${consumerId}:`, error);
+          updateConsumerStatus(consumerId, 'disconnected', 'Erro de Conexão');
+        };
+        
+        consumers[consumerId].ws = ws;
+        
+      } catch (error) {
+        console.error(`Erro ao conectar com Consumer ${consumerId}:`, error);
+        updateConsumerStatus(consumerId, 'disconnected', 'Erro de Conexão');
+        // Tentar reconectar após 5 segundos
+        setTimeout(() => connectToConsumer(consumerId, port), 5000);
+      }
+    }
+
+    function clearLogs(consumerId) {
+      const logElement = document.getElementById(consumers[consumerId].element);
+      logElement.innerHTML = '';
+      consumers[consumerId].count = 0;
+      countElements[consumerId].textContent = '0';
+    }
+
+    // Iniciar conexões com os 3 consumers
+    connectToConsumer(1, 8081);
+    connectToConsumer(2, 8082);
+    connectToConsumer(3, 8083);
+
+    // Atualizar horário dos últimos updates a cada segundo
+    setInterval(() => {
+      for (let i = 1; i <= 3; i++) {
+        if (consumers[i].lastUpdate) {
+          lastUpdateElements[i].textContent = formatTimestamp(consumers[i].lastUpdate);
+        }
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
