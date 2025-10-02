@@ -37,3 +37,16 @@ up:
 status:
 	docker ps -a
 
+log_consumer0:
+	docker logs consumer_service0 
+log_consumer1:                              
+	docker logs consumer_service1
+log_consumer2:
+	docker logs consumer_service2
+
+log_producer0:
+	docker logs consumer_service0 
+log_producer1:                              
+	docker logs consumer_service1
+log_producer2:
+	docker logs consumer_service2
