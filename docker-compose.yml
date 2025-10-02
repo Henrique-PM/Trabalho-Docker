@@ -29,11 +29,7 @@ services:
           memory: 512M
     networks:
       - int-network
-    healthcheck:
-      test: ["CMD", "kafka-broker-api-version", "--bootstrap-server", "localhost:9092"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+
   kafka2:
     container_name: kafka2
     build: ./kafka
@@ -64,11 +60,7 @@ services:
           memory: 512M
     networks:
       - int-network
-    healthcheck:
-      test: ["CMD", "kafka-broker-api-version", "--bootstrap-server", "localhost:9092"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+
   kafka3:
     container_name: kafka3
     build: ./kafka
@@ -99,18 +91,42 @@ services:
           memory: 512M
     networks:
       - int-network
-    healthcheck:
-      test: ["CMD", "kafka-broker-api-version", "--bootstrap-server", "localhost:9092"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+
+  kafka-setup:
+    container_name: kafka-setup
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+    - kafka1
+    - kafka2
+    - kafka3
+
+    command: >
+      bash -c "
+      echo '=== INICIANDO SETUP DO KAFKA ===' &&
+      echo 'Aguardando todos os brokers Kafka ficarem saudáveis...' &&
+      sleep 30 &&
+      echo 'Verificando conexão com kafka1...' &&
+      kafka-topics --bootstrap-server kafka1:9092 --list &&
+      echo 'Verificando conexão com kafka2...' &&
+      kafka-topics --bootstrap-server kafka2:9093 --list &&
+      echo 'Verificando conexão com kafka3...' &&
+      kafka-topics --bootstrap-server kafka3:9094 --list &&
+      echo 'Todos os brokers estão respondendo!' &&
+      echo 'Criando tópico dados-sensores...' &&
+      kafka-topics --bootstrap-server kafka1:9092 --create --if-not-exists --topic dados-sensores --partitions 3 --replication-factor 2 &&
+      echo 'Tópico criado/verificado com sucesso!' &&
+      echo 'Configurações do tópico:' &&
+      kafka-topics --bootstrap-server kafka1:9092 --describe --topic dados-sensores &&
+      echo '=== SETUP CONCLUÍDO COM SUCESSO ==='
+      "
+    networks:
+      - int-network
+
   producer-service0:
     container_name: producer_service0
     build: ./producer-service
     depends_on:
-      - kafka1
-      - kafka2
-      - kafka3
+     - kafka-setup
     deploy:
       resources:
         limits:
@@ -128,9 +144,7 @@ services:
     container_name: producer_service1
     build: ./producer-service
     depends_on:
-      - kafka1
-      - kafka2
-      - kafka3
+      - kafka-setup
     deploy:
       resources:
         limits:
@@ -148,9 +162,7 @@ services:
     container_name: producer_service2
     build: ./producer-service
     depends_on:
-      - kafka1
-      - kafka2
-      - kafka3
+      - kafka-setup
     deploy:
       resources:
         limits:
@@ -170,9 +182,7 @@ services:
     ports:
       - "8081:8080"
     depends_on:
-      - kafka1
-      - kafka2
-      - kafka3
+      - kafka-setup
     deploy:
       resources:
         limits:
@@ -192,9 +202,7 @@ services:
     ports:
       - "8082:8080"
     depends_on:
-      - kafka1
-      - kafka2
-      - kafka3
+      - kafka-setup
     deploy:
       resources:
         limits:
@@ -214,9 +222,7 @@ services:
     ports:
       - "8083:8080"
     depends_on:
-      - kafka1
-      - kafka2
-      - kafka3
+      - kafka-setup
     deploy:
       resources:
         limits:

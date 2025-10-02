@@ -6,6 +6,7 @@ stop:
 	docker stop kafka1 || true
 	docker stop kafka2 || true
 	docker stop kafka3 || true
+	docker stop kafka-setup || true
 	docker stop producer-service0 || true
 	docker stop producer-service1 || true
 	docker stop producer-service2 || true
@@ -16,6 +17,7 @@ stop:
 	docker rm kafka1 || true
 	docker rm kafka2 || true
 	docker rm kafka3 || true
+	docker rm kafka-setup || true
 	docker rm producer-service0 || true
 	docker rm producer-service1 || true
 	docker rm producer-service2 || true
