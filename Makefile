@@ -56,20 +56,17 @@ fail-consumer1:
 fail-consumer2:
 	docker stop consumer-service2 || true
 
-fail-kafka1-log:
-	fail-kafka1
+fail-kafka1-log: fail-kafka1
 	@echo ">>> Verificando rebalanço nos outros brokers..."
 	docker logs kafka2 --tail 50
 	docker logs kafka3 --tail 50
 
-fail-consumer0-log:
-	fail-consumer0
+fail-consumer0-log:	fail-consumer0
 	@echo ">>> Logs do grupo de consumidores (rebalanço esperado)..."
 	docker logs consumer_service1 --tail 50
 	docker logs consumer_service2 --tail 50
 
-fail-producer0-log:
-	fail-producer0
+fail-producer0-log: fail-producer0
 	@echo ">>> Verificando os outros produtores..."
 	docker logs producer_service1 --tail 30
 	docker logs producer_service2 --tail 30
