@@ -50,3 +50,23 @@ log_producer1:
 	docker logs consumer_service1
 log_producer2:
 	docker logs consumer_service2
+
+
+fail-kafka1:
+	docker stop kafka1 || true
+fail-kafka2:
+	docker stop kafka2 || true
+fail-kafka3:
+	docker stop kafka3 || true
+fail-producer0:
+	docker stop producer-service0 || true
+fail-producer1:
+	docker stop producer-service1 || true
+fail-producer2:
+	docker stop producer-service2 || true
+fail-consumer0:
+	docker stop consumer-service0 || true
+fail-consumer1:
+	docker stop consumer-service1 || true
+fail-consumer2:
+	docker stop consumer-service2 || true
