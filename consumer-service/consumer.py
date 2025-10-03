@@ -1,3 +1,19 @@
+"""
+	Mateus Mansour (2310555)
+	Paulo Henrique Lopes Moncao (2310736)
+
+Módulo consumer
+===============
+
+Consumidor Kafka responsável por receber mensagens de sensores,
+armazenar em um banco SQLite e repassar via WebSocket.
+
+Este script consome dados de sensores provenientes de um cluster Kafka,
+persiste as informações localmente e transmite em tempo real para
+clientes conectados via WebSocket. Inclui tratamento de reconexão
+automática, logs de status e controle de sessões.
+"""
+
 import os
 import json
 import asyncio
@@ -20,6 +36,9 @@ print(f"[CONSUMER {CONSUMER_ID}] Brokers: {KAFKA_BROKERS}")
 print(f"[CONSUMER {CONSUMER_ID}] Tópico: {TOPIC}")
 print(f"[CONSUMER {CONSUMER_ID}] Grupo: {GROUP_ID}")
 
+
+# Banco de dados ---------------------------------------------------------------
+# Cria o banco SQLite (caso não exista) para armazenar leituras dos sensores.
 conn = sqlite3.connect("sensores.db")
 cursor = conn.cursor()
 
@@ -36,6 +55,8 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS sensores(
 )""")
 conn.commit()
 
+# Inicialização do Kafka Consumer ---------------------------------------------
+# Tenta criar uma instância do consumidor Kafka com reconexão automática.
 while consumer is None:
     try:
         consumer = KafkaConsumer(
@@ -57,6 +78,20 @@ while consumer is None:
         time.sleep(5)
 
 async def register_client(websocket):
+    """
+    Registra e gerencia a conexão de um cliente WebSocket.
+
+    Esta função adiciona o cliente conectado ao conjunto global de clientes ativos,
+    mantém a conexão aberta até que o cliente seja desconectado e, ao final, remove
+    o cliente da lista. Também exibe logs informando o número atual de conexões.
+
+    Args:
+        websocket (websockets.WebSocketServerProtocol): 
+            Objeto que representa a conexão WebSocket do cliente.
+
+    Returns:
+        None
+    """
     connected_clients.add(websocket)
     print(f"[CONSUMER {CONSUMER_ID}] Cliente WebSocket conectado. Total: {len(connected_clients)}")
     try:
@@ -66,6 +101,26 @@ async def register_client(websocket):
         print(f"[CONSUMER {CONSUMER_ID}] Cliente WebSocket desconectado. Total: {len(connected_clients)}")
 
 async def kafka_loop():
+    """
+    Loop principal de consumo e processamento de mensagens Kafka.
+
+    Esta função executa continuamente a leitura de mensagens do Kafka, 
+    armazenando os dados recebidos no banco SQLite e transmitindo-os 
+    em tempo real para clientes conectados via WebSocket. 
+    Também monitora periodicamente as partições atribuídas ao consumidor.
+
+    O loop utiliza `run_in_executor` para executar `consumer.poll()` 
+    em uma *thread* separada, evitando bloqueios na *event loop* do asyncio.
+
+    Estrutura geral:
+        - A cada 30 segundos, exibe as partições Kafka atribuídas.
+        - Consome mensagens do tópico configurado.
+        - Insere os dados de sensores no banco SQLite.
+        - Reenvia os dados processados para todos os clientes WebSocket conectados.
+
+    Returns:
+        None
+    """
     loop = asyncio.get_event_loop()
     
     last_assignment_check = 0
@@ -119,9 +174,24 @@ async def kafka_loop():
                     )
 
 async def main():
+    """
+    Função principal do consumidor.
+
+    Inicializa o servidor WebSocket e o loop de consumo do Kafka.
+    Mantém ambos em execução até a finalização manual.
+
+    Returns:
+        None
+    """
     server = await websockets.serve(register_client, "0.0.0.0", 8080)
     print(f"[CONSUMER {CONSUMER_ID}] WebSocket rodando em ws://0.0.0.0:8080")
     await kafka_loop()
 
 if __name__ == "__main__":
+    """
+    Ponto de entrada do script.
+
+    Inicia o loop de eventos assíncronos e o consumidor Kafka.
+    Fecha o banco de dados adequadamente ao encerrar.
+    """
     asyncio.run(main())

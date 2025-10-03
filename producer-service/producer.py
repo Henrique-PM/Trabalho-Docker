@@ -1,3 +1,31 @@
+"""
+	Mateus Mansour (2310555)
+	Paulo Henrique Lopes Moncao (2310736)
+
+Simulador de Produtor Kafka para Dados de Sensores Industriais.
+
+Este script simula o envio periódico de dados de sensores (como temperatura, vibração e consumo de energia) 
+para um cluster Kafka. As mensagens são produzidas com um formato JSON e enviadas para um tópico especificado.
+
+O script realiza as seguintes funções:
+- Estabelece conexão com os brokers Kafka configurados.
+- Gera dados de sensores com valores aleatórios.
+- Envia os dados para um tópico Kafka com uma chave baseada no sensor_id.
+- Realiza tentativas automáticas de reconexão em caso de falha na conexão com o Kafka.
+
+Variáveis de ambiente configuráveis:
+- KAFKA_BROKERS: lista de brokers Kafka separados por vírgula (default: "kafka1:9092,kafka2:9093,kafka3:9094").
+- TOPIC: nome do tópico Kafka onde as mensagens serão enviadas (default: "dados-sensores").
+- SENSOR_PREFIX: prefixo que será usado na identificação dos sensores (default: "sensor_0").
+
+Requisitos:
+- Kafka em execução com o tópico especificado criado.
+- Biblioteca kafka-python instalada.
+
+Exemplo de execução contínua:
+    python produtor_sensores.py
+"""
+
 import os
 import json
 import random
