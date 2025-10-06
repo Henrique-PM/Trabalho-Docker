@@ -46,6 +46,7 @@ O sistema segue a arquitetura **produtor → Kafka cluster → consumidor → fr
 
 ## Estrutura do Projeto
 
+```ascii
 ├── consumer-service/ # Código Python do consumidor
 ├── producer-service/ # Código Python do produtor
 ├── kafka/ # Dockerfile e configuração Kafka
@@ -53,7 +54,7 @@ O sistema segue a arquitetura **produtor → Kafka cluster → consumidor → fr
 ├── docker-compose.yml # Orquestração de todos os containers
 ├── Makefile # Automatização de build, up, stop, fail
 └── README.md # Documentação do projeto
-
+```
 
 ---
 
